@@ -4,6 +4,8 @@ from openpyxl.utils import get_column_letter
 from copy import deepcopy
 from datetime import datetime,timedelta
 import os
+from PIL import Image
+
 
 # ——————————————————数据部分————————————————————————————————————
 source_folder = os.path.join(os.getcwd(), 'PI')
@@ -33,6 +35,9 @@ subset = df.iloc[10:color_end_row, :]
 # 工厂
 subset.iloc[:, -1] = subset.iloc[:, -1].ffill()
 # 款号
+sku_only_name = subset.iloc[:, 0].dropna().tolist()
+print(sku_only_name)
+
 subset.iloc[:, 0] = subset.iloc[:, 0] .ffill()
 # 工厂名字
 factory_name = subset.iloc[: , -1].unique().tolist()
@@ -44,6 +49,50 @@ filtered_dfs = []
 for specific_value in factory_name:
     filtered_df = subset[subset.iloc[:, -1]== specific_value]
     filtered_dfs.append(filtered_df)
+
+
+def download_all_images_from_sheet(filename, save_dir):
+    wb = load_workbook(filename)
+    # 获取第一个工作表
+    sheet = wb.worksheets[0]
+
+    for i, image1 in enumerate(sheet._images, start=1):
+        image_anchor = image1.anchor
+        image_from = image_anchor._from
+
+        col, colOff, row, rowOff = image_from.col, image_from.colOff, image_from.row, image_from.rowOff
+
+        # 获取图像的数据
+        img = Image.open(image1.ref).convert("RGB")
+
+        # 将图像数据保存到文件
+        save_path = f"{save_dir}/image{row}_{col}.png"  # 使用行列信息来保存图片，确保顺序
+        img.save(save_path)
+
+        print(f"已下载图像: {save_path}")
+
+    wb.close()
+
+save_dir = 'img'
+
+download_all_images_from_sheet(file_path, save_dir)
+
+folder_path = 'img/'
+
+file_list = sku_only_name
+
+# 获取文件夹下所有文件的列表
+files = os.listdir(folder_path)
+
+# 确保文件列表和文件名列表长度一致
+if len(files) -2  == len(file_list):
+    for i in range(1, len(files)):
+        old_name = folder_path + files[i]
+        new_name = folder_path + file_list[i - 1]
+        os.rename(old_name, new_name)
+        print(f"文件 {old_name} 重命名为 {new_name}")
+else:
+    print("文件列表和文件名列表长度不匹配")
 
 #————————————————————————————————————工厂订单部分————————————————————————
 

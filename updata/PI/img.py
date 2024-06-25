@@ -17,7 +17,7 @@ def download_all_images_from_sheet(filename, save_dir):
         img = Image.open(image1.ref).convert("RGB")
 
         # 将图像数据保存到文件
-        save_path = f"{save_dir}/image{i}.png"
+        save_path = f"{save_dir}/image{row}_{col}.png"  # 使用行列信息来保存图片，确保顺序
         img.save(save_path)
 
         print(f"已下载图像: {save_path}")

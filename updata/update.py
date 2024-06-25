@@ -20,16 +20,22 @@ subset = df.iloc[10:color_end_row, :]
 subset.iloc[:, -1] = subset.iloc[:, -1].ffill()
 # 款号
 subset.iloc[:, 0] = subset.iloc[:, 0] .ffill()
+# des
+subset.iloc[:, 2] = subset.iloc[:, 2] .ffill()
 
+factory_name = {'鑫业':'Xinye','亿多得':'Yi Duode', '尚锐':'Shangrui', '五海':'Wuhai',
+                '丰羽': 'Fengyu', '嘉轶':'Jiayi' , '腾峰':'Tengfeng',
+                '璐琪': 'Luqi', '彤宇': 'Tongyu','邦佐维':'Bang Zuowei'}
 # 品牌名字
 filename = xlsx_files[0]
 prefix = filename.split('-')[0]
+subset.iloc[:, -1]= subset.iloc[:, -1].map(factory_name)
 
-new_order = [-3, 0, -1, -4, -2]
+new_order = [-3, 0, 2 , -1, -4, -2]
 
 subset = subset.iloc[:, new_order]
 
-subset.insert(2, 'des', value=None)
+
 subset.insert(3, 'com', value=None)
 subset.insert(6, 'ship', value=None)
 subset.insert(7, 'brand', value=prefix)
