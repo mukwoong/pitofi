@@ -5,6 +5,7 @@ from copy import deepcopy
 from datetime import datetime,timedelta
 import os
 from PIL import Image
+from openpyxl.drawing.image import Image as ExcelImage
 
 
 # ——————————————————数据部分————————————————————————————————————
@@ -61,12 +62,15 @@ def download_all_images_from_sheet(filename, save_dir):
         image_from = image_anchor._from
 
         col, colOff, row, rowOff = image_from.col, image_from.colOff, image_from.row, image_from.rowOff
-
+        if col < 1:
+            cell_value = str(row)  # 如果是0列，使用行号来命名图片
+        else:
+            cell_value = sheet.cell(row+1, col).value
         # 获取图像的数据
         img = Image.open(image1.ref).convert("RGB")
 
         # 将图像数据保存到文件
-        save_path = f"{save_dir}/image{row}_{col}.png"  # 使用行列信息来保存图片，确保顺序
+        save_path = os.path.join(save_dir, f"{cell_value}.png")  # 使用行列信息来保存图片，确保顺序
         img.save(save_path)
 
         print(f"已下载图像: {save_path}")
@@ -77,22 +81,7 @@ save_dir = 'img'
 
 download_all_images_from_sheet(file_path, save_dir)
 
-folder_path = 'img/'
 
-file_list = sku_only_name
-
-# 获取文件夹下所有文件的列表
-files = os.listdir(folder_path)
-
-# 确保文件列表和文件名列表长度一致
-if len(files) -2  == len(file_list):
-    for i in range(1, len(files)):
-        old_name = folder_path + files[i]
-        new_name = folder_path + file_list[i - 1]
-        os.rename(old_name, new_name)
-        print(f"文件 {old_name} 重命名为 {new_name}")
-else:
-    print("文件列表和文件名列表长度不匹配")
 
 #————————————————————————————————————工厂订单部分————————————————————————
 
@@ -198,7 +187,58 @@ for times in range(runtimes):
         for i, value in enumerate(values, start=11):
             ws.cell(row=i, column=column_numbers[column_name], value=value)
 
-    # -----------格式部分
+    #————————————————————————图片——————————————————————————————
+
+    icoin = ExcelImage('img/0.png')
+    ws.add_image(icoin, 'A1')
+    new_height = 80  # 设置新高度
+    aspect_ratio = icoin.width / icoin.height  # 计算原始宽高比
+    new_width = int(new_height * aspect_ratio)  # 根据宽高比计算新宽度
+    icoin.width = new_width  # 设置新宽度
+    icoin.height = new_height  # 设置新高度
+
+
+    icoin = ExcelImage('img/None.png')
+    ws.add_image(icoin, f'O{heji_end_row + 3}')
+    new_height = 120  # 设置新高度
+    aspect_ratio = icoin.width / icoin.height  # 计算原始宽高比
+    new_width = int(new_height * aspect_ratio)  # 根据宽高比计算新宽度
+    icoin.width = new_width  # 设置新宽度
+    icoin.height = new_height  # 设置新高度
+
+
+
+    img_folder = 'img/'
+    processed_files = {}  # 记录已处理过的图片文件名
+    for row in range(11, heji_end_row + 1):
+        # 获取单元格 A 列的值
+        cell_value = ws[f'A{row}'].value
+        
+        if cell_value is not None and cell_value not in processed_files:
+            # 构建图片文件的完整路径
+            img_file = img_folder + cell_value + '.png'
+            
+            # 创建图片对象
+            img = ExcelImage(img_file)
+            
+            # 图片插入范围
+            anchor = f'C{row}'
+            
+            # 设置新高度
+            new_height = 100  # 设置新高度
+            aspect_ratio = img.width / img.height  # 计算原始宽高比
+            new_width = int(new_height * aspect_ratio)  # 根据宽高比计算新宽度
+            img.width = new_width  # 设置新宽度
+            img.height = new_height  # 设置新高度
+
+            # 插入图片
+            ws.add_image(img, anchor)
+            
+            # 将文件名添加到已处理列表中
+            processed_files[cell_value] = True
+
+    # ——————————————————格式部分——————————————————
+
     type_list = f1.iloc[:, 0].tolist()
 
     end_row = df_length + 10  # 假设数据从第11行开始
